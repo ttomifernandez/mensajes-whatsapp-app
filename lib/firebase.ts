@@ -25,10 +25,15 @@ const firebaseConfig = {
 };
 
 let auth: Auth | null = null;
+let app: any = null;
+let db: any = null;
 
 const getAuthInstance = async () => {
   if (!auth) {
-    const app = initializeApp(firebaseConfig);
+    if (!app) {
+      app = initializeApp(firebaseConfig);
+      db = getFirestore(app);
+    }
     auth = getAuth(app);
     try {
       await signInAnonymously(auth);
@@ -39,13 +44,15 @@ const getAuthInstance = async () => {
   return auth;
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const initFirebase = async () => {
+  await getAuthInstance();
+};
 
 // Templates CRUD
 export const createTemplate = async (template: Omit<Template, 'id' | 'createdAt' | 'updatedAt'>) => {
   try {
     await getAuthInstance();
+    if (!db) db = getFirestore(app);
     const docRef = await addDoc(collection(db, 'templates'), {
       ...template,
       createdAt: Timestamp.now(),
@@ -61,6 +68,7 @@ export const createTemplate = async (template: Omit<Template, 'id' | 'createdAt'
 export const getTemplates = async (): Promise<Template[]> => {
   try {
     await getAuthInstance();
+    if (!db) db = getFirestore(app);
     const querySnapshot = await getDocs(collection(db, 'templates'));
     return querySnapshot.docs.map((doc) => ({
       id: doc.id,
@@ -77,6 +85,7 @@ export const getTemplates = async (): Promise<Template[]> => {
 export const getTemplate = async (id: string): Promise<Template | null> => {
   try {
     await getAuthInstance();
+    if (!db) db = getFirestore(app);
     const docSnap = await getDoc(doc(db, 'templates', id));
     if (docSnap.exists()) {
       return {
@@ -96,6 +105,7 @@ export const getTemplate = async (id: string): Promise<Template | null> => {
 export const updateTemplate = async (id: string, updates: Partial<Template>) => {
   try {
     await getAuthInstance();
+    if (!db) db = getFirestore(app);
     const docRef = doc(db, 'templates', id);
     const updateData = {
       ...updates,
@@ -113,6 +123,7 @@ export const updateTemplate = async (id: string, updates: Partial<Template>) => 
 export const deleteTemplate = async (id: string) => {
   try {
     await getAuthInstance();
+    if (!db) db = getFirestore(app);
     await deleteDoc(doc(db, 'templates', id));
   } catch (error) {
     console.error('Error deleting template:', error);
@@ -124,6 +135,7 @@ export const deleteTemplate = async (id: string) => {
 export const getTemplatesByCategory = async (category: string): Promise<Template[]> => {
   try {
     await getAuthInstance();
+    if (!db) db = getFirestore(app);
     const q = query(collection(db, 'templates'), where('category', '==', category));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map((doc) => ({
