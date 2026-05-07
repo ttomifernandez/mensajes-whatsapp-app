@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://mensajes-whatsapp-app.vercel.app/sitemap.xml
